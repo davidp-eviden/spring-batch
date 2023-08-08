@@ -1,7 +1,9 @@
 package com.team.springbatchuppercase.domain.repository;
 
 import com.team.springbatchuppercase.domain.model.Car;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.stereotype.Repository;
 
-public interface CarRepository extends JpaRepository<Car, String> {
+@Repository
+public interface CarRepository extends PagingAndSortingRepository<Car,String> {
 }

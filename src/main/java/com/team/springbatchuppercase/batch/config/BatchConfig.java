@@ -1,48 +1,83 @@
 package com.team.springbatchuppercase.batch.config;
 
+
+import com.team.springbatchuppercase.batch.listeners.JobCompletionNotificationListener;
 import com.team.springbatchuppercase.batch.processors.CarProcessor;
 import com.team.springbatchuppercase.domain.model.Car;
 import com.team.springbatchuppercase.domain.model.CarTransformed;
 import com.team.springbatchuppercase.domain.repository.CarRepository;
-import org.springframework.batch.item.database.BeanPropertyItemSqlParameterSourceProvider;
-import org.springframework.batch.item.database.JdbcBatchItemWriter;
-import org.springframework.batch.item.database.builder.JdbcBatchItemWriterBuilder;
-import org.springframework.batch.item.file.FlatFileItemReader;
-import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
-import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
+import com.team.springbatchuppercase.domain.repository.CarTransformedRepository;
+import org.springframework.batch.core.Job;
+import org.springframework.batch.core.Step;
+import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
+import org.springframework.batch.core.job.builder.JobBuilder;
+import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.step.builder.StepBuilder;
+import org.springframework.batch.item.data.RepositoryItemReader;
+import org.springframework.batch.item.data.RepositoryItemWriter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.domain.Sort;
 
-import javax.sql.DataSource;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Configuration
+@EnableBatchProcessing
 public class BatchConfig {
 
+    @Autowired
+    private CarRepository carRepository;
+
+    @Autowired
+    private CarTransformedRepository carTransformedRepository;
+
     @Bean
-    public FlatFileItemReader<Car> reader() {
-        return new FlatFileItemReaderBuilder<Car>()
-                .name("carItemReader")
-                .resource(new ClassPathResource("sample-data.csv"))
-                .delimited()
-                .names(new String[]{"car_license_plate", "car_name"})
-                .fieldSetMapper(new BeanWrapperFieldSetMapper<Car>() {{
-                    setTargetType(Car.class);
-                }})
-                .build();
+    public RepositoryItemReader<Car> reader(){
+        RepositoryItemReader<Car> reader = new RepositoryItemReader<>();
+        reader.setRepository(carRepository);
+        reader.setMethodName("findByLicensePlate");
+        reader.setArguments(List.of("AAA1"));
+        Map<String, Sort.Direction> sorts = new HashMap<>();
+        sorts.put("licensePlate", Sort.Direction.ASC);
+        reader.setSort(sorts);
+        return reader;
+    }
+
+
+    @Bean
+    public RepositoryItemWriter<CarTransformed> writer(){
+        RepositoryItemWriter<CarTransformed> writer = new RepositoryItemWriter<>();
+        writer.setRepository(carTransformedRepository);
+        writer.setMethodName("save");
+        return writer;
     }
 
     @Bean
-    public CarProcessor processor() {
+    public CarProcessor processor(){
         return new CarProcessor();
     }
 
     @Bean
-    public JdbcBatchItemWriter<CarTransformed> writer(DataSource dataSource) {
-        return new JdbcBatchItemWriterBuilder<CarTransformed>()
-                .itemSqlParameterSourceProvider(new BeanPropertyItemSqlParameterSourceProvider<>())
-                .sql("INSERT INTO car_uppercase (car_license_plate, car_name) VALUES (:licensePlate, :name)")
-                .dataSource(dataSource)
+    public Job convertUserToUppercaseJob(JobRepository jobRepository, Step step1, JobCompletionNotificationListener listener){
+        return new JobBuilder("convertUserToUppercaseJob",jobRepository)
+                .listener(listener)
+                .flow(step1)
+                .end()
                 .build();
     }
+
+    @Bean
+    public Step step1(JobRepository jobRepository, RepositoryItemWriter<CarTransformed> writer){
+        return new StepBuilder("step1",jobRepository)
+                .<Car,CarTransformed> chunk(10)
+                .reader(reader())
+                .processor(processor())
+                .writer(writer)
+                .build();
+    }
+
+
 }

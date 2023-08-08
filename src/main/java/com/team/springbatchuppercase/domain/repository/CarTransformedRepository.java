@@ -1,8 +1,9 @@
 package com.team.springbatchuppercase.domain.repository;
 
-import com.team.springbatchuppercase.domain.model.Car;
 import com.team.springbatchuppercase.domain.model.CarTransformed;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
 
-public interface CarTransformedRepository extends JpaRepository<CarTransformed, String> {
+@Repository
+public interface CarTransformedRepository extends CrudRepository<CarTransformed,String> {
 }
