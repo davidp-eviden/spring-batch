@@ -9,6 +9,6 @@ public class CarProcessor implements ItemProcessor<Car, CarTransformed> {
 
     @Override
     public CarTransformed process(Car item) throws Exception {
-        return new CarTransformed(item.getLicensePlate().toUpperCase(),item.getName().toUpperCase());
+        return new CarTransformed(item.getLicensePlate().toUpperCase(),item.getName().toUpperCase(), item.getPrice(),item.getAvailable());
     }
 }

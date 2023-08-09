@@ -23,4 +23,10 @@ public class CarTransformed {
 
     @Column(name = "car_name")
     private String name;
+
+    @Column(columnDefinition = "Decimal(5,2)")
+    private Double price;
+
+    @Column(columnDefinition = "tinyint")
+    private Boolean available;
 }
