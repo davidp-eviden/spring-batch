@@ -16,6 +16,7 @@ import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.data.RepositoryItemReader;
 import org.springframework.batch.item.data.RepositoryItemWriter;
 import org.springframework.batch.item.data.builder.RepositoryItemReaderBuilder;
+import org.springframework.batch.item.data.builder.RepositoryItemWriterBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -41,16 +42,17 @@ public class BatchConfig {
                 .repository(carRepository)
                 .methodName("findAll")
                 .sorts(Collections.singletonMap("name", Sort.Direction.ASC))
+                .pageSize(10) // Optional
                 .build();
     }
 
 
     @Bean
     public RepositoryItemWriter<CarTransformed> writer() {
-        RepositoryItemWriter<CarTransformed> writer = new RepositoryItemWriter<>();
-        writer.setRepository(carTransformedRepository);
-        writer.setMethodName("save");
-        return writer;
+        return new RepositoryItemWriterBuilder<CarTransformed>()
+                .repository(carTransformedRepository)
+                .methodName("save")
+                .build();
     }
 
     @Bean
