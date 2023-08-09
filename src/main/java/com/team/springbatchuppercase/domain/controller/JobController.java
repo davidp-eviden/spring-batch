@@ -1,5 +1,6 @@
 package com.team.springbatchuppercase.domain.controller;
 
+import com.team.springbatchuppercase.domain.CarService;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
@@ -16,23 +17,28 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/jobs")
 public class JobController {
-    @Autowired
-    private JobLauncher jobLauncher;
+    private final JobLauncher jobLauncher;
 
-    @Autowired
-    private Job job;
+    private final Job job;
 
-    @PostMapping("/start")
-    public void runJobs(){
-        JobParameters jobParameters = new JobParametersBuilder()
-                .addLong("startAt",System.currentTimeMillis()).toJobParameters();
-        try {
-            jobLauncher.run(job,jobParameters);
-        } catch (JobExecutionAlreadyRunningException | JobRestartException | JobInstanceAlreadyCompleteException |
-                 JobParametersInvalidException e) {
-            e.printStackTrace();
-        }
+    private final CarService carService;
+
+    public JobController(JobLauncher jobLauncher, Job job, CarService carService){
+        this.jobLauncher = jobLauncher;
+        this.job = job;
+        this.carService = carService;
     }
 
+
+
+    @PostMapping("/start")
+    public void runJobs() throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
+        this.carService.insertTestData();
+
+        JobParameters jobParameters = new JobParametersBuilder()
+                .addLong("timeTaken", System.currentTimeMillis())
+                .toJobParameters();
+        jobLauncher.run(job, jobParameters);
+    }
 }
 
