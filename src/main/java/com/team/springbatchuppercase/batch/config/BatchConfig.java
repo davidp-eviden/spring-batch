@@ -39,10 +39,10 @@ public class BatchConfig {
     @Bean
     public RepositoryItemReader<Car> reader() {
         return new RepositoryItemReaderBuilder<Car>()
+                .name("start")
                 .repository(carRepository)
                 .methodName("findAll")
                 .sorts(Collections.singletonMap("name", Sort.Direction.ASC))
-                .pageSize(10) // Optional
                 .build();
     }
 
