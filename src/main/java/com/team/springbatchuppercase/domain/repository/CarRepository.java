@@ -8,5 +8,5 @@ import java.util.List;
 
 @Repository
 public interface CarRepository extends PagingAndSortingRepository<Car,String> {
-    List<Car> findByAvailableTrue();
+    List<Car> findAll();
 }

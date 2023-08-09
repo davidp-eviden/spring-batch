@@ -2,7 +2,6 @@ package com.team.springbatchuppercase.batch.config;
 
 
 import com.team.springbatchuppercase.batch.listeners.JobCompletionNotificationListener;
-import com.team.springbatchuppercase.batch.processors.CarProcessor;
 import com.team.springbatchuppercase.domain.model.Car;
 import com.team.springbatchuppercase.domain.model.CarTransformed;
 import com.team.springbatchuppercase.domain.repository.CarRepository;
@@ -16,15 +15,14 @@ import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.data.RepositoryItemReader;
 import org.springframework.batch.item.data.RepositoryItemWriter;
+import org.springframework.batch.item.data.builder.RepositoryItemReaderBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.Sort;
 import org.springframework.transaction.PlatformTransactionManager;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.Collections;
 
 @Configuration
 @EnableBatchProcessing
@@ -36,21 +34,19 @@ public class BatchConfig {
     @Autowired
     private CarTransformedRepository carTransformedRepository;
 
-    @Bean
-    public RepositoryItemReader<Car> reader(){
-        RepositoryItemReader<Car> reader = new RepositoryItemReader<>();
-        reader.setRepository(carRepository);
-        reader.setMethodName("findByAvailableTrue");
 
-        Map<String, Sort.Direction> sorts = new HashMap<>();
-        sorts.put("name", Sort.Direction.ASC);
-        reader.setSort(sorts);
-        return reader;
+    @Bean
+    public RepositoryItemReader<Car> reader() {
+        return new RepositoryItemReaderBuilder<Car>()
+                .repository(carRepository)
+                .methodName("findAll")
+                .sorts(Collections.singletonMap("name", Sort.Direction.ASC))
+                .build();
     }
 
 
     @Bean
-    public RepositoryItemWriter<CarTransformed> writer(){
+    public RepositoryItemWriter<CarTransformed> writer() {
         RepositoryItemWriter<CarTransformed> writer = new RepositoryItemWriter<>();
         writer.setRepository(carTransformedRepository);
         writer.setMethodName("save");
@@ -58,27 +54,21 @@ public class BatchConfig {
     }
 
     @Bean
-    public CarProcessor processor(){
-        return new CarProcessor();
-    }
-
-    @Bean
-    public Job convertCarToUppercaseJob(JobRepository jobRepository, Step step1, JobCompletionNotificationListener listener){
-        return new JobBuilder("convertCarToUppercaseJob",jobRepository)
+    public Job convertCarToUppercaseJob(JobRepository jobRepository, Step step1, JobCompletionNotificationListener listener) {
+        return new JobBuilder("convertCarToUppercaseJob", jobRepository)
                 .incrementer(new RunIdIncrementer())
                 .listener(listener)
-                .flow(step1)
-                .end()
+                .start(step1)
                 .build();
     }
 
     @Bean
-    public Step step1(JobRepository jobRepository, PlatformTransactionManager transactionManager, RepositoryItemWriter<CarTransformed> writer){
-        return new StepBuilder("step1",jobRepository)
-                .<Car,CarTransformed> chunk(10,transactionManager)
+    public Step step1(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
+        return new StepBuilder("step1", jobRepository)
+                .<Car, CarTransformed>chunk(10, transactionManager)
                 .reader(reader())
-                .processor(processor())
-                .writer(writer)
+                .processor(car -> new CarTransformed(car.getLicensePlate().toUpperCase(), car.getName().toUpperCase(), car.getPrice(), car.getAvailable()))
+                .writer(writer())
                 .build();
     }
 
