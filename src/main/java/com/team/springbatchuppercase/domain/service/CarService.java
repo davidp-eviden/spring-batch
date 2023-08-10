@@ -1,4 +1,4 @@
-package com.team.springbatchuppercase.domain;
+package com.team.springbatchuppercase.domain.service;
 
 import com.team.springbatchuppercase.domain.repository.CarRepository;
 import org.springframework.stereotype.Service;

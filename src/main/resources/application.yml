@@ -1,15 +1,18 @@
 spring:
+    # Datasource
+    datasource:
+        username: root
+        password: toor
+        url: jdbc:mysql://localhost:3307/cars?createDatabaseIfNotExist=true
+        driver-class-name: com.mysql.cj.jdbc.Driver
+    # Spring JPA
+    jpa:
+        hibernate:
+            ddl-auto: update
+        show-sql: true
+    # Spring batch
     batch:
         jdbc:
             initialize-schema: always
         job:
             enabled: false
-    datasource:
-        driver-class-name: com.mysql.cj.jdbc.Driver
-        password: toor
-        url: jdbc:mysql://localhost:3307/cars?createDatabaseIfNotExist=true
-        username: root
-    jpa:
-        hibernate:
-            ddl-auto: update
-        show-sql: true
